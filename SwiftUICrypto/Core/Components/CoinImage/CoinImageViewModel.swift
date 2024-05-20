@@ -5,14 +5,34 @@
 //  Created by YILMAZ ER on 19.05.2024.
 //
 
+import Foundation
 import SwiftUI
+import Combine
 
-struct CoinImageViewModel: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+class CoinImageViewModel: ObservableObject {
+    
+    @Published var image: UIImage? = nil
+    @Published var isLoading: Bool = true
+    
+    private let coin: CoinModel
+    private let dataService: CoinImageService
+    private var cancellables = Set<AnyCancellable>()
+    
+    init(coin: CoinModel) {
+        self.coin = coin
+        self.dataService = CoinImageService(coin: coin)
+        self.addSubscribers()
+        self.isLoading = true
     }
-}
+    
+    private func addSubscribers() {
+        dataService.$image
+            .sink { [weak self] (_) in
+                self?.isLoading = false
+            } receiveValue: { [weak self] (returnedImage) in
+                self?.image = returnedImage
+            }
+            .store(in: &cancellables)
 
-#Preview {
-    CoinImageViewModel()
+    }
 }
